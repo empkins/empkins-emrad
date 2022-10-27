@@ -1,3 +1,5 @@
-# emRad
+# radRec
 
-Merges emRad Software with Server, Gui and Exporter
+IHF Radar Recorder Suite
+
+Run the Socket_Test.py Software

@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="newPrefix">
+    <file>FAU_SFB EmpkinS_Logo_CMYK.png</file>
+    <file>ICON_sensorik.png</file>
+  </qresource>
+</RCC>

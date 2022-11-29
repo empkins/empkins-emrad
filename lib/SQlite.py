@@ -68,6 +68,7 @@ class SQliteClient(QObject):
             self.c.execute('pragma journal_mode=wal')
             self.c.execute('PRAGMA journal_mode = MEMORY')
             self.c.execute('PRAGMA synchronous = OFF')
+            self.c.execute('PRAGMA auto_vacuum = 0')
 
             # Check for existing packets table
             self.c.execute(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='packets' ''')

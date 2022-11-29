@@ -66,8 +66,8 @@ class SQliteClient(QObject):
 
             self.message.emit("Starting Message Provider")
             self.c.execute('pragma journal_mode=wal')
-            # self.c.execute('PRAGMA journal_mode = MEMORY')
-            # self.c.execute('PRAGMA synchronous = OFF')
+            self.c.execute('PRAGMA journal_mode = MEMORY')
+            self.c.execute('PRAGMA synchronous = OFF')
 
             # Check for existing packets table
             self.c.execute(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='packets' ''')
@@ -123,6 +123,7 @@ class SQliteClient(QObject):
         self.c.execute('insert into packets values (?,?,?,?,?,?)', (values['timestamp'], values['sensor_id'],
                                                                     values['sequence_id'], values['data_format'],
                                                                     values['data_size'], values['data']))
+        self.connection.commit()
 
     @Slot()
     def insertMeasurements(self, values):
@@ -177,7 +178,7 @@ class SQliteClient(QObject):
 
     def periodicTimer(self):
         
-        self.connection.commit()
+        #self.connection.commit()
         self.stats.emit(self.packetCounter*10)
         self.packetCounter = 0
         self.timer.stop()

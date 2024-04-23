@@ -10,7 +10,7 @@ class emRadParser():
 
     def parse(self, data):
         try:
-            temp = np.reshape(unpack('<256i', data), (64,4))
+            temp = np.reshape(unpack('<320i', data), (32,10))
             return temp
         except:
             pass

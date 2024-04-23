@@ -47,7 +47,7 @@ MINBPM = 50
 MAXBPM = 130
 MINBRPM = 3
 MAXBRPM = 12
-FS = round(8e6 / 1024 / 4)
+FS = round(8e6 / 1024 / 8)
 
 
 
@@ -158,26 +158,26 @@ class MainWindow(QtWidgets.QMainWindow):
             
     def timerUpdate(self):
         
-        sensorOffset = int(self.ui.nodeSelector.cleanText())*4
-        
-        sensor = int(self.ui.sensorSelector.cleanText()) - 1
+        subsensor = int(self.ui.sensorSelector.cleanText()) -1
+        sensor = int(self.ui.nodeSelector.cleanText()) 
             
-        data = self.db_client.getPacket(sensorOffset + sensor,5)
+        data = self.db_client.getPacket(sensor,5)
         series = []
         
         for packet in data:
-            series.append(self.parser.parse(packet[5]))
+            series.append(self.parser.parse(packet[8]))
     
         try:     
             samples = np.concatenate(series)
         except:
             return 0
-        self.iqTrace.setData(samples[:,0],samples[:,1])
+        
+        self.iqTrace.setData(samples[:,subsensor*2],samples[:,subsensor*2+1])
         dispsize = np.shape(samples)[0]
         
         
-        self.rad_i = self.filter_fun.butter_highpass_filter(samples[:,0] ,0.2, FS)
-        self.rad_q = self.filter_fun.butter_highpass_filter(samples[:,1] ,0.2, FS)
+        self.rad_i = self.filter_fun.butter_highpass_filter(samples[:,subsensor*2] ,0.2, FS)
+        self.rad_q = self.filter_fun.butter_highpass_filter(samples[:,subsensor*2+1] ,0.2, FS)
     
         self.rad = np.sqrt(np.square(self.rad_i)+np.square(self.rad_q))
         self.hs = self.filter_fun.butter_bandpass_filter(self.rad, 15, 80, FS)
@@ -188,26 +188,26 @@ class MainWindow(QtWidgets.QMainWindow):
         
     def slowtimerUpdate(self):
         
-        sensorOffset = int(self.ui.nodeSelector.cleanText())*4
+        sensorOffset = int(self.ui.nodeSelector.cleanText())
         
         
         
-        if (self.db_client.getRadStat(sensorOffset + 0) > 0):
+        if (self.db_client.getRadStat(sensorOffset ) > 0):
             self.sensor1_led.setPixmap(self.green_led)
         else:
             self.sensor1_led.setPixmap(self.red_led)
         
-        if (self.db_client.getRadStat(sensorOffset + 1) > 0):
+        if (self.db_client.getRadStat(sensorOffset ) > 0):
             self.sensor2_led.setPixmap(self.green_led)
         else:
             self.sensor2_led.setPixmap(self.red_led)
             
-        if (self.db_client.getRadStat(sensorOffset + 2) > 0):
+        if (self.db_client.getRadStat(sensorOffset ) > 0):
             self.sensor3_led.setPixmap(self.green_led)
         else:
             self.sensor3_led.setPixmap(self.red_led)
             
-        if (self.db_client.getRadStat(sensorOffset + 3) > 0):
+        if (self.db_client.getRadStat(sensorOffset ) > 0):
             self.sensor4_led.setPixmap(self.green_led)
         else:
             self.sensor4_led.setPixmap(self.red_led)

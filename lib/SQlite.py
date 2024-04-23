@@ -28,6 +28,9 @@ class SQliteClient(QObject):
                                     sensor_id INTEGER,
                                     sequence_id INTEGER,
                                     data_format INTEGER,
+                                    uptime INTEGER,
+                                    dummy1 INTEGER,
+                                    dummy2 INTEGER,
                                     data_size INTEGER,
                                     data BLOB
                                     ); """
@@ -66,7 +69,6 @@ class SQliteClient(QObject):
 
             self.message.emit("Starting Message Provider")
             self.c.execute('pragma journal_mode=wal')
-            self.c.execute('PRAGMA journal_mode = MEMORY')
             self.c.execute('PRAGMA synchronous = OFF')
             self.c.execute('PRAGMA auto_vacuum = 0')
 
@@ -121,8 +123,8 @@ class SQliteClient(QObject):
     def insertPackets(self, values):
         self.packetCounter += 1
         # with self.connection:
-        self.c.execute('insert into packets values (?,?,?,?,?,?)', (values['timestamp'], values['sensor_id'],
-                                                                    values['sequence_id'], values['data_format'],
+        self.c.execute('insert into packets values (?,?,?,?,?,?,?,?,?)', (values['timestamp'], values['sensor_id'],
+                                                                    values['sequence_id'], values['data_format'], values['uptime'],values['dummy1'],values['dummy2'],
                                                                     values['data_size'], values['data']))
         self.connection.commit()
 

@@ -53,6 +53,10 @@ c = connection.cursor()
 c.execute("SELECT rowid, * FROM measurements WHERE processed = 0")
 rows = c.fetchall()
 
+
+
+
+
 for row in rows:
     rowid = row[0]
     measurement_id = row[1]
@@ -60,58 +64,20 @@ for row in rows:
     sensor_id = int(row[3])
     start  = row[4]
     stop = row[5]
+    
+    
     print("Got Measurement ID:" ,  measurement_id)
     
-
-    
-    series0 = []
-    series1 = []
-    series2 = []
-    series3 = []
-
-    c.execute("SELECT * FROM packets WHERE sensor_id = ? and timestamp BETWEEN ? and ?", (sensor_id*4, start, stop))
+    c.execute("SELECT * FROM packets WHERE sensor_id = ? and timestamp BETWEEN ? and ?", (sensor_id, start, stop))
     packets = c.fetchall()
-
+    series = []
     for packet in packets:
-        series0.append(parser.parse(packet[5]))
+        series.append(parser.parse(packet[8]))
     try:     
-        series0 = np.concatenate(series0)
+        series = np.concatenate(series)
     except:
-        series0 = np.array([])
-    
-    c.execute("SELECT * FROM packets WHERE sensor_id = ? and timestamp BETWEEN ? and ?", (sensor_id*4+1, start, stop))
-    packets = c.fetchall()
+        series = np.array([])
 
-    for packet in packets:
-        series1.append(parser.parse(packet[5]))
-    try:     
-        series1 = np.concatenate(series1)
-    except:
-        series1 = np.array([])
-        
-        
-        
-    c.execute("SELECT * FROM packets WHERE sensor_id = ? and timestamp BETWEEN ? and ?", (sensor_id*4+2, start, stop))
-    packets = c.fetchall()
-
-    for packet in packets:
-        series2.append(parser.parse(packet[5]))
-    try:     
-        series2 = np.concatenate(series2)
-    except:
-        series2 = np.array([])
-    
-    
-    c.execute("SELECT * FROM packets WHERE sensor_id = ? and timestamp BETWEEN ? and ?", (sensor_id*4+3, start, stop))
-    packets = c.fetchall()
-
-    for packet in packets:
-        series3.append(parser.parse(packet[5]))
-    try:     
-        series3 = np.concatenate(series3)
-    except:
-        series3 = np.array([])
-    
     filename = "data_" + slugify(measurement_id) + ".h5"
     path = Path(filename)
     
@@ -126,11 +92,13 @@ for row in rows:
         g.attrs["sensor_id"] = sensor_id
         g.attrs["start"] = start
         g.attrs["stop"] = stop
-
-        g.create_dataset('rad1', data=series0)
-        g.create_dataset('rad2', data=series1)
-        g.create_dataset('rad3', data=series2)
-        g.create_dataset('rad4', data=series3)
+        
+        print(np.shape(series))
+        g.create_dataset('rad1', data=series[:,[0,1,8,9]] )
+        g.create_dataset('rad2', data=series[:,[2,3,8,9]] )
+        g.create_dataset('rad3', data=series[:,[4,5,8,9]] )
+        g.create_dataset('rad4', data=series[:,[6,7,8,9]] )
+    
         hf.close()
         c.execute("UPDATE measurements SET processed = 1 WHERE rowid = ?", (rowid,))
         connection.commit()

@@ -9,10 +9,13 @@ class UDPParser(QObject):
     message = Signal(dict)
     
     messageformat = Struct(
-     "sensor_id" / Int16ul,
-     "sequence_id" / Int16ul,
-     "data_format" / Int16ul,
-     "data_size" / Int16ul,
+     "sensor_id" / Int32ul,
+     "sequence_id" / Int32ul,
+     "data_format" / Int32ul,
+     "uptime" / Int32ul,
+     "dummy1" / Int32ul,
+     "dummy2" / Int32ul,
+     "data_size" / Int32ul,
      "data" / Bytes(this.data_size))
 
     def __init__(self):

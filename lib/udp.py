@@ -43,6 +43,8 @@ class UDPServer(QObject):
         self.ip = ip
         self.port = port
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.udp_socket2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.udp_socket.settimeout(0.1)
 
         self.signal = self.SIG_NORMAL
@@ -69,7 +71,7 @@ class UDPServer(QObject):
                         pass
                     else:
                         if data:
-                            
+                            self.udp_socket2.sendto(data, ("127.0.0.1", 2000))
                             self.message.emit(datetime.datetime.now().timestamp(), data)
                             self.packetcounter += 1
                         else:
@@ -93,3 +95,5 @@ class UDPServer(QObject):
 
     def close(self):
         self.signal = self.SIG_STOP
+        
+

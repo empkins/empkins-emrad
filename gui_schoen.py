@@ -167,8 +167,10 @@ class UDPServer(QObject):
                                 temp = np.reshape(unpack('<320i', data[28:]), (32, 10))
                                 sendbufferI = np.copy(temp[:, Node * 2])
                                 sendbufferQ = np.copy(temp[:, Node * 2 + 1])
+                                self.message.emit(sendbufferI,sendbufferQ)
 
-                    else:
+
+                        else:
                             self.status.emit(self.LISTEN, '')
                             break
                 elif self.pyqtSignal == self.SIG_STOP:

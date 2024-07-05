@@ -93,5 +93,3 @@ class UDPServer(QObject):
 
     def close(self):
         self.signal = self.SIG_STOP
-        
-

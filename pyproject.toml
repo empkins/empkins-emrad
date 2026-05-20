@@ -1,0 +1,30 @@
+[project]
+name = "empkins-emrad"
+version = "0.1.0"
+description = "EmpkinS radar recorder and export tools"
+readme = "README.md"
+requires-python = ">=3.9,<3.13"
+dependencies = [
+    "cobs",
+    "construct",
+    "h5py",
+    "numpy",
+    "pyqt5",
+    "pyqtgraph",
+    "pyserial",
+    "pyside6",
+    "python-slugify",
+    "qt-material",
+    "scipy",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+emrad-recorder = "central_ui:main"
+
+[tool.setuptools]
+py-modules = ["central_ui"]
+packages = ["lib"]

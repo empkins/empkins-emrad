@@ -378,6 +378,19 @@ class CentralWindow(QtWidgets.QMainWindow):
         header.addWidget(self.status_label)
         layout.addLayout(header)
 
+        self.tabs = QtWidgets.QTabWidget()
+        layout.addWidget(self.tabs, 1)
+
+        main_tab = QtWidgets.QWidget()
+        main_layout = QtWidgets.QVBoxLayout(main_tab)
+        main_layout.setSpacing(14)
+        self.tabs.addTab(main_tab, "Recording")
+
+        settings_tab = QtWidgets.QWidget()
+        settings_layout = QtWidgets.QVBoxLayout(settings_tab)
+        settings_layout.setSpacing(14)
+        self.tabs.addTab(settings_tab, "Settings")
+
         info = QtWidgets.QGridLayout()
         self.path_label = QtWidgets.QLabel(str(self.db_path))
         self.path_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
@@ -385,12 +398,22 @@ class CentralWindow(QtWidgets.QMainWindow):
         self.new_recording_button.clicked.connect(self.create_new_recording)
         self.open_recording_button = QtWidgets.QPushButton("Open Existing Recording")
         self.open_recording_button.clicked.connect(self.open_existing_recording)
+        info.addWidget(QtWidgets.QLabel("Recording database"), 0, 0)
+        info.addWidget(self.path_label, 0, 1, 1, 3)
+        info.addWidget(self.new_recording_button, 0, 4)
+        info.addWidget(self.open_recording_button, 0, 5)
+        main_layout.addLayout(info)
+
+        settings_box = QtWidgets.QGroupBox("Acquisition settings")
+        settings_form = QtWidgets.QGridLayout(settings_box)
         self.port_spin = QtWidgets.QSpinBox()
         self.port_spin.setRange(1, 65535)
         self.port_spin.setValue(300)
         self.node_spin = QtWidgets.QSpinBox()
         self.node_spin.setRange(0, 63)
         self.node_spin.setValue(0)
+        self.auto_detect_check = QtWidgets.QCheckBox("Auto-detect node and expected radars")
+        self.auto_detect_check.setChecked(True)
         self.expected_checks = []
         expected_box = QtWidgets.QHBoxLayout()
         for index in range(4):
@@ -400,17 +423,15 @@ class CentralWindow(QtWidgets.QMainWindow):
             expected_box.addWidget(check)
         expected_box.addStretch()
 
-        info.addWidget(QtWidgets.QLabel("Recording database"), 0, 0)
-        info.addWidget(self.path_label, 0, 1, 1, 3)
-        info.addWidget(self.new_recording_button, 0, 4)
-        info.addWidget(self.open_recording_button, 0, 5)
-        info.addWidget(QtWidgets.QLabel("UDP port"), 1, 0)
-        info.addWidget(self.port_spin, 1, 1)
-        info.addWidget(QtWidgets.QLabel("Node"), 1, 2)
-        info.addWidget(self.node_spin, 1, 3)
-        info.addWidget(QtWidgets.QLabel("Expected radars"), 2, 0)
-        info.addLayout(expected_box, 2, 1, 1, 4)
-        layout.addLayout(info)
+        settings_form.addWidget(self.auto_detect_check, 0, 0, 1, 4)
+        settings_form.addWidget(QtWidgets.QLabel("UDP port"), 1, 0)
+        settings_form.addWidget(self.port_spin, 1, 1)
+        settings_form.addWidget(QtWidgets.QLabel("Node ID"), 1, 2)
+        settings_form.addWidget(self.node_spin, 1, 3)
+        settings_form.addWidget(QtWidgets.QLabel("Expected radars"), 2, 0)
+        settings_form.addLayout(expected_box, 2, 1, 1, 3)
+        settings_layout.addWidget(settings_box)
+        settings_layout.addStretch()
 
         controls = QtWidgets.QHBoxLayout()
         self.start_button = QtWidgets.QPushButton("Start Recording")
@@ -429,13 +450,13 @@ class CentralWindow(QtWidgets.QMainWindow):
         self.missing_packet_label.setStyleSheet("font-size: 16px; color: #16a34a;")
         controls.addWidget(self.missing_packet_label)
         controls.addStretch()
-        layout.addLayout(controls)
+        main_layout.addLayout(controls)
 
         body = QtWidgets.QHBoxLayout()
         body.setSpacing(16)
         body.addWidget(self._build_status_panel(), 1)
         body.addWidget(self._build_plot_panel(), 2)
-        layout.addLayout(body, 1)
+        main_layout.addLayout(body, 1)
 
         export_box = QtWidgets.QGroupBox("Export")
         export_layout = QtWidgets.QVBoxLayout(export_box)
@@ -452,7 +473,7 @@ class CentralWindow(QtWidgets.QMainWindow):
         export_controls.addWidget(self.refresh_button)
         export_controls.addWidget(self.export_button)
         export_layout.addLayout(export_controls)
-        layout.addWidget(export_box)
+        main_layout.addWidget(export_box)
 
         self.setStyleSheet(
             """
@@ -549,6 +570,13 @@ class CentralWindow(QtWidgets.QMainWindow):
         self.heartbeat_plot.set_values([])
         self.update_radar_status()
 
+    def set_settings_enabled(self, can_edit_recording_settings):
+        self.port_spin.setEnabled(can_edit_recording_settings)
+        self.node_spin.setEnabled(can_edit_recording_settings or not self.can_record)
+        self.auto_detect_check.setEnabled(can_edit_recording_settings)
+        for check in self.expected_checks:
+            check.setEnabled(can_edit_recording_settings)
+
     def set_store(self, store, can_record, status_text):
         self.close_store(mark_stopped=True)
         self.store = store
@@ -562,8 +590,7 @@ class CentralWindow(QtWidgets.QMainWindow):
         self.reset_live_state()
         self.refresh_timeline()
         self.start_button.setEnabled(can_record)
-        self.port_spin.setEnabled(can_record)
-        self.node_spin.setEnabled(True)
+        self.set_settings_enabled(can_record)
         self.status_label.setText(status_text)
         self.status_label.setStyleSheet("font-size: 16px; font-weight: 600; color: #2563eb;")
 
@@ -631,14 +658,16 @@ class CentralWindow(QtWidgets.QMainWindow):
         self.radar_state = self._empty_radar_state()
         self.last_recorded_sequence = None
         self.missing_packet_count = 0
+        if self.auto_detect_check.isChecked():
+            for check in self.expected_checks:
+                check.setChecked(False)
         self.missing_packet_label.setText("0 missing packets")
         self.missing_packet_label.setStyleSheet("font-size: 16px; color: #16a34a;")
         self.start_button.setEnabled(False)
         self.stop_button.setEnabled(True)
         self.new_recording_button.setEnabled(False)
         self.open_recording_button.setEnabled(False)
-        self.port_spin.setEnabled(False)
-        self.node_spin.setEnabled(False)
+        self.set_settings_enabled(False)
         self.status_label.setText("Recording")
         self.status_label.setStyleSheet("font-size: 16px; font-weight: 600; color: #16a34a;")
 
@@ -651,6 +680,21 @@ class CentralWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot(dict)
     def on_packet_received(self, packet):
+        parsed = self.parser.parse(packet["data"])
+        if parsed is None:
+            return
+
+        if self.auto_detect_check.isChecked() and self.is_recording:
+            detected_node_id = int(packet["sensor_id"])
+            if self.last_recorded_sequence is None and detected_node_id != self.base_sensor_id():
+                self.node_spin.setValue(detected_node_id)
+                self.status_label.setText(f"Recording node {detected_node_id}")
+
+            for index, check in enumerate(self.expected_checks):
+                valid_signal, _signal = payload_quality(parsed, index)
+                if valid_signal and not check.isChecked():
+                    check.setChecked(True)
+
         if int(packet["sensor_id"]) != self.base_sensor_id():
             return
 
@@ -665,10 +709,6 @@ class CentralWindow(QtWidgets.QMainWindow):
             )
             self.missing_packet_label.setStyleSheet("font-size: 16px; color: #dc2626;")
         self.last_recorded_sequence = sequence_id
-
-        parsed = self.parser.parse(packet["data"])
-        if parsed is None:
-            return
 
         for index in range(4):
             state = self.radar_state[index]
@@ -710,8 +750,7 @@ class CentralWindow(QtWidgets.QMainWindow):
         self.stop_button.setEnabled(False)
         self.new_recording_button.setEnabled(True)
         self.open_recording_button.setEnabled(True)
-        self.port_spin.setEnabled(self.can_record)
-        self.node_spin.setEnabled(True)
+        self.set_settings_enabled(self.can_record)
         self.status_label.setText("Stopped")
         self.status_label.setStyleSheet("font-size: 16px; font-weight: 600; color: #dc2626;")
 

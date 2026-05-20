@@ -39,45 +39,80 @@ The legacy recorder and viewer are still available as `server.py` and
 
 ## Windows App Build
 
-For Windows users who should not work with Python or an IDE, use the portable
-Windows app.
+For Windows users who should not work with Python or an IDE, build the portable
+Windows app once and then run the generated `.exe`.
 
-### Recommended: Download From GitHub Actions
+### After Cloning The Repository
+
+Start here after the repository has been cloned to the Windows computer.
+
+1. Open **PowerShell**.
+
+2. Go into the cloned repository folder:
+
+```powershell
+cd C:\path\to\empkins-emrad
+```
+
+Replace `C:\path\to\empkins-emrad` with the actual folder where the repository
+was cloned.
+
+3. Make sure you are on the `guiV3` branch:
+
+```powershell
+git switch guiV3
+git pull
+```
+
+4. Install `uv` once:
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+5. Close PowerShell and open it again.
+
+6. Go back into the cloned repository folder:
+
+```powershell
+cd C:\path\to\empkins-emrad
+```
+
+7. Build the Windows app:
+
+```powershell
+powershell -ExecutionPolicy ByPass -File .\packaging\build_windows.ps1
+```
+
+8. Open the generated app folder:
+
+```text
+dist\EmpkinS Radar Recorder
+```
+
+9. Start the app by double-clicking:
+
+```text
+EmpkinS Radar Recorder.exe
+```
+
+The build script also creates a ZIP file that can be copied to another Windows
+computer:
+
+```text
+dist\EmpkinS-Radar-Recorder-Windows.zip
+```
+
+### Alternative: Download From GitHub Actions
+
+If a Windows build has already been created on GitHub:
 
 1. Open the repository on GitHub.
 2. Go to **Actions**.
 3. Open the latest successful **Build Windows App** run on the `guiV3` branch.
 4. Download the artifact named `EmpkinS-Radar-Recorder-Windows`.
 5. Unzip it on the Windows computer.
-6. Double-click:
-
-```text
-EmpkinS Radar Recorder.exe
-```
-
-### If You Need To Build It On Windows
-
-Open PowerShell on the Windows computer and install `uv` once:
-
-```powershell
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
-
-Close and reopen PowerShell. From the repository folder, run:
-
-```powershell
-powershell -ExecutionPolicy ByPass -File .\packaging\build_windows.ps1
-```
-
-The script creates:
-
-```text
-dist\EmpkinS Radar Recorder\EmpkinS Radar Recorder.exe
-dist\EmpkinS-Radar-Recorder-Windows.zip
-```
-
-The ZIP can be copied to another Windows computer, unzipped, and started by
-double-clicking `EmpkinS Radar Recorder.exe`.
+6. Double-click `EmpkinS Radar Recorder.exe`.
 
 For more details, see:
 

@@ -34,13 +34,20 @@ class RecordingStore:
         self.parser = emRadParser()
         self._setup_schema()
 
+    @staticmethod
+    def default_recordings_root():
+        documents = Path.home() / "Documents"
+        if documents.exists():
+            return documents / "EmpkinS Radar Recordings"
+        return Path.cwd() / "recordings"
+
     @classmethod
-    def create_new(cls, recordings_root="recordings", recording_id=None):
+    def create_new(cls, recordings_root=None, recording_id=None):
         started = datetime.datetime.now()
         if recording_id is None:
             recording_id = started.strftime("%Y-%m-%d_%H-%M-%S")
 
-        root = Path(recordings_root)
+        root = Path(recordings_root) if recordings_root else cls.default_recordings_root()
         recording_dir = root / safe_slug(recording_id)
         if recording_dir.exists():
             base_dir = recording_dir

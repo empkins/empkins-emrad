@@ -14,8 +14,16 @@ from lib.recording_store import RecordingStore
 
 SEQUENCE_MODULO = 2**32
 MAX_REASONABLE_SEQUENCE_GAP = 100000
-APP_DIR = Path(__file__).resolve().parent
-EMPKINS_LOGO_PATH = APP_DIR / "ui" / "icons" / "empkins_logo.jpg"
+
+
+def resource_path(relative_path):
+    bundle_root = getattr(sys, "_MEIPASS", None)
+    if bundle_root:
+        return Path(bundle_root) / relative_path
+    return Path(__file__).resolve().parent / relative_path
+
+
+EMPKINS_LOGO_PATH = resource_path(Path("ui") / "icons" / "empkins_logo.jpg")
 
 
 def format_time(timestamp):
@@ -774,7 +782,7 @@ class CentralWindow(QtWidgets.QMainWindow):
         filename, _filter = QtWidgets.QFileDialog.getOpenFileName(
             self,
             "Open existing recording",
-            str(Path("recordings").resolve()),
+            str(RecordingStore.default_recordings_root()),
             "SQLite Recordings (*.sqlite *.db *.sql);;All Files (*)",
         )
         if not filename:

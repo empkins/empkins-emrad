@@ -22,11 +22,12 @@ After `uv sync`, the app can also be started with:
 uv run emrad-recorder
 ```
 
-On startup it creates a new recording folder under `recordings/` and opens a
-dedicated SQLite database for that recording. Use **Start Recording** and
-**Stop Recording** for acquisition. Use **Open Existing Recording** to load a
-previous `recording.sqlite` for later export without recording into it. Use
-**New Recording** to switch back to a fresh database.
+On startup it creates a new recording folder under
+`Documents/EmpkinS Radar Recordings` and opens a dedicated SQLite database for
+that recording. Use **Start Recording** and **Stop Recording** for acquisition.
+Use **Open Existing Recording** to load a previous `recording.sqlite` for later
+export without recording into it. Use **New Recording** to switch back to a
+fresh database.
 
 The export panel shows recorded time coverage; drag over the timeline to select
 a range and export it to HDF5.
@@ -35,3 +36,12 @@ Missing FirmwareV2 packet sequence IDs are shown live in the UI and exported as
 
 The legacy recorder and viewer are still available as `server.py` and
 `empkins_gui.py`.
+
+## Windows App Build
+
+To build a portable Windows app, follow:
+
+[packaging/WINDOWS_BUILD.md](packaging/WINDOWS_BUILD.md)
+
+The `guiV3` branch also builds a downloadable Windows ZIP through GitHub
+Actions.

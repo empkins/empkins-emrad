@@ -39,9 +39,46 @@ The legacy recorder and viewer are still available as `server.py` and
 
 ## Windows App Build
 
-To build a portable Windows app, follow:
+For Windows users who should not work with Python or an IDE, use the portable
+Windows app.
+
+### Recommended: Download From GitHub Actions
+
+1. Open the repository on GitHub.
+2. Go to **Actions**.
+3. Open the latest successful **Build Windows App** run on the `guiV3` branch.
+4. Download the artifact named `EmpkinS-Radar-Recorder-Windows`.
+5. Unzip it on the Windows computer.
+6. Double-click:
+
+```text
+EmpkinS Radar Recorder.exe
+```
+
+### If You Need To Build It On Windows
+
+Open PowerShell on the Windows computer and install `uv` once:
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Close and reopen PowerShell. From the repository folder, run:
+
+```powershell
+powershell -ExecutionPolicy ByPass -File .\packaging\build_windows.ps1
+```
+
+The script creates:
+
+```text
+dist\EmpkinS Radar Recorder\EmpkinS Radar Recorder.exe
+dist\EmpkinS-Radar-Recorder-Windows.zip
+```
+
+The ZIP can be copied to another Windows computer, unzipped, and started by
+double-clicking `EmpkinS Radar Recorder.exe`.
+
+For more details, see:
 
 [packaging/WINDOWS_BUILD.md](packaging/WINDOWS_BUILD.md)
-
-The `guiV3` branch also builds a downloadable Windows ZIP through GitHub
-Actions.

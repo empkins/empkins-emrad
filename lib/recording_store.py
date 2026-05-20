@@ -22,6 +22,7 @@ class RecordingStore:
     PAYLOAD_COLUMNS = 10
     MISSING_FILL_VALUE = -1
     SEQUENCE_MODULO = 2**32
+    CHANNEL_VALID_STD_THRESHOLD = 1.0
 
     def __init__(self, db_path):
         self.db_path = Path(db_path)
@@ -214,6 +215,13 @@ class RecordingStore:
             range(0, current_sequence)
         )
 
+    def _channel_is_valid(self, packet_data, channel_index):
+        if packet_data.shape[1] < 8:
+            return False
+        i_col = channel_index * 2
+        q_col = i_col + 1
+        return float(np.std(packet_data[:, [i_col, q_col]])) > self.CHANNEL_VALID_STD_THRESHOLD
+
     def export_range_to_h5(self, start_time, stop_time, output_path, node_id=0):
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -227,13 +235,14 @@ class RecordingStore:
             group.attrs["created_at"] = time.time()
             group.attrs["sample_rate_hz"] = self.FS
             group.attrs["missing_fill_value"] = self.MISSING_FILL_VALUE
+            group.attrs["channel_valid_std_threshold"] = self.CHANNEL_VALID_STD_THRESHOLD
 
             rows = self.connection.execute(
                 """
                 SELECT timestamp, sequence_id, data
                 FROM packets
                 WHERE sensor_id = ? AND timestamp BETWEEN ? AND ?
-                ORDER BY timestamp
+                ORDER BY timestamp, sequence_id
                 """,
                 (sensor_id, start_time, stop_time),
             ).fetchall()
@@ -242,6 +251,7 @@ class RecordingStore:
             packet_times = []
             packet_sequences = []
             missing_sequences = []
+            invalid_channel_sequences = {index: [] for index in range(4)}
             previous_sequence = None
             missing_packet = np.full(
                 (self.SAMPLES_PER_PACKET, self.PAYLOAD_COLUMNS),
@@ -260,6 +270,13 @@ class RecordingStore:
 
                 parsed = self.parser.parse(payload)
                 if parsed is not None:
+                    parsed = parsed.copy()
+                    for channel_index in range(4):
+                        if not self._channel_is_valid(parsed, channel_index):
+                            i_col = channel_index * 2
+                            q_col = i_col + 1
+                            parsed[:, [i_col, q_col]] = self.MISSING_FILL_VALUE
+                            invalid_channel_sequences[channel_index].append(sequence_id)
                     parsed_packets.append(parsed)
                     packet_times.append(timestamp)
                     packet_sequences.append(sequence_id)
@@ -292,6 +309,14 @@ class RecordingStore:
                 data=np.asarray(missing_sequences, dtype=np.uint32),
             )
             group.attrs["missing_packet_count"] = len(missing_sequences)
+            for channel_index in range(4):
+                name = f"rad{channel_index + 1}"
+                invalid_sequences = invalid_channel_sequences[channel_index]
+                group.create_dataset(
+                    f"{name}_invalid_channel_sequence_ids",
+                    data=np.asarray(invalid_sequences, dtype=np.uint32),
+                )
+                group.attrs[f"{name}_invalid_channel_packet_count"] = len(invalid_sequences)
 
         self.connection.execute(
             """

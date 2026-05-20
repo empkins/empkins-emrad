@@ -14,6 +14,8 @@ from lib.recording_store import RecordingStore
 
 SEQUENCE_MODULO = 2**32
 MAX_REASONABLE_SEQUENCE_GAP = 100000
+APP_DIR = Path(__file__).resolve().parent
+EMPKINS_LOGO_PATH = APP_DIR / "ui" / "icons" / "empkins_logo.jpg"
 
 
 def format_time(timestamp):
@@ -179,20 +181,20 @@ class SignalPlotWidget(QtWidgets.QWidget):
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
-        painter.fillRect(self.rect(), QtGui.QColor("#111827"))
+        painter.fillRect(self.rect(), QtGui.QColor("#0f1f1b"))
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
 
         plot_rect = self.rect().adjusted(12, 30, -12, -12)
-        painter.setPen(QtGui.QPen(QtGui.QColor("#374151"), 1))
+        painter.setPen(QtGui.QPen(QtGui.QColor("#27443a"), 1))
         for index in range(1, 4):
             y = plot_rect.top() + index * plot_rect.height() / 4
             painter.drawLine(plot_rect.left(), y, plot_rect.right(), y)
 
-        painter.setPen(QtGui.QColor("#e5e7eb"))
+        painter.setPen(QtGui.QColor("#ecfdf5"))
         painter.drawText(12, 20, self.title)
 
         if self.values.size < 2:
-            painter.setPen(QtGui.QColor("#9ca3af"))
+            painter.setPen(QtGui.QColor("#a7b7b0"))
             painter.drawText(plot_rect, QtCore.Qt.AlignCenter, "Waiting for signal")
             return
 
@@ -208,7 +210,7 @@ class SignalPlotWidget(QtWidgets.QWidget):
         for index, value in enumerate(values[1:], start=1):
             path.lineTo(plot_rect.left() + index * x_step, mid_y - value * scale_y)
 
-        painter.setPen(QtGui.QPen(QtGui.QColor("#22c55e"), 2))
+        painter.setPen(QtGui.QPen(QtGui.QColor("#57ff3a"), 2))
         painter.drawPath(path)
 
 
@@ -238,18 +240,18 @@ class TimelineWidget(QtWidgets.QWidget):
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
-        painter.fillRect(self.rect(), QtGui.QColor("#f9fafb"))
+        painter.fillRect(self.rect(), QtGui.QColor("#f8faf9"))
         track = self.rect().adjusted(18, 34, -18, -34)
 
-        painter.setPen(QtGui.QColor("#111827"))
+        painter.setPen(QtGui.QColor("#17211d"))
         painter.drawText(18, 22, "Recorded coverage")
 
         painter.setPen(QtCore.Qt.NoPen)
-        painter.setBrush(QtGui.QColor("#e5e7eb"))
+        painter.setBrush(QtGui.QColor("#e4ebe7"))
         painter.drawRoundedRect(track, 4, 4)
 
         if not self.bounds:
-            painter.setPen(QtGui.QColor("#6b7280"))
+            painter.setPen(QtGui.QColor("#65746d"))
             painter.drawText(track, QtCore.Qt.AlignCenter, "No packets recorded yet")
             return
 
@@ -257,7 +259,7 @@ class TimelineWidget(QtWidgets.QWidget):
         span = max(1.0, stop - start)
         max_count = max((count for _, _, count in self.coverage), default=1)
 
-        painter.setBrush(QtGui.QColor("#2563eb"))
+        painter.setBrush(QtGui.QColor("#2f7d68"))
         for bucket_start, bucket_stop, count in self.coverage:
             left = track.left() + (bucket_start - start) / span * track.width()
             right = track.left() + (bucket_stop - start) / span * track.width()
@@ -275,13 +277,13 @@ class TimelineWidget(QtWidgets.QWidget):
             left = track.left() + (sel_start - start) / span * track.width()
             right = track.left() + (sel_stop - start) / span * track.width()
             selection_rect = QtCore.QRectF(left, track.top(), max(2, right - left), track.height())
-            painter.setBrush(QtGui.QColor(34, 197, 94, 70))
+            painter.setBrush(QtGui.QColor(87, 255, 58, 56))
             painter.drawRect(selection_rect)
-            painter.setPen(QtGui.QPen(QtGui.QColor("#16a34a"), 2))
+            painter.setPen(QtGui.QPen(QtGui.QColor("#35b52c"), 2))
             painter.drawLine(left, track.top(), left, track.bottom())
             painter.drawLine(right, track.top(), right, track.bottom())
 
-        painter.setPen(QtGui.QColor("#4b5563"))
+        painter.setPen(QtGui.QColor("#607169"))
         painter.drawText(18, self.height() - 10, format_time(start))
         right_text = format_time(stop)
         width = painter.fontMetrics().horizontalAdvance(right_text)
@@ -369,12 +371,29 @@ class CentralWindow(QtWidgets.QMainWindow):
         layout.setSpacing(14)
 
         header = QtWidgets.QHBoxLayout()
-        title = QtWidgets.QLabel("EmpkinS Radar Recorder")
-        title.setStyleSheet("font-size: 24px; font-weight: 700;")
-        header.addWidget(title)
+        header.setSpacing(16)
+        self.logo_label = QtWidgets.QLabel()
+        self.logo_label.setObjectName("logoLabel")
+        logo = QtGui.QPixmap(str(EMPKINS_LOGO_PATH))
+        if not logo.isNull():
+            self.logo_label.setPixmap(
+                logo.scaledToHeight(54, QtCore.Qt.SmoothTransformation)
+            )
+        self.logo_label.setFixedSize(185, 62)
+        self.logo_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        header.addWidget(self.logo_label)
+        title_box = QtWidgets.QVBoxLayout()
+        title_box.setSpacing(2)
+        title = QtWidgets.QLabel("Radar Recorder")
+        title.setObjectName("appTitle")
+        subtitle = QtWidgets.QLabel("EmpkinS overnight acquisition")
+        subtitle.setObjectName("appSubtitle")
+        title_box.addWidget(title)
+        title_box.addWidget(subtitle)
+        header.addLayout(title_box)
         header.addStretch()
         self.status_label = QtWidgets.QLabel("Ready")
-        self.status_label.setStyleSheet("font-size: 16px; font-weight: 600; color: #2563eb;")
+        self.status_label.setObjectName("statusPill")
         header.addWidget(self.status_label)
         layout.addLayout(header)
 
@@ -395,8 +414,10 @@ class CentralWindow(QtWidgets.QMainWindow):
         self.path_label = QtWidgets.QLabel(str(self.db_path))
         self.path_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
         self.new_recording_button = QtWidgets.QPushButton("New Recording")
+        self.new_recording_button.setObjectName("secondaryButton")
         self.new_recording_button.clicked.connect(self.create_new_recording)
         self.open_recording_button = QtWidgets.QPushButton("Open Existing Recording")
+        self.open_recording_button.setObjectName("secondaryButton")
         self.open_recording_button.clicked.connect(self.open_existing_recording)
         info.addWidget(QtWidgets.QLabel("Recording database"), 0, 0)
         info.addWidget(self.path_label, 0, 1, 1, 3)
@@ -435,19 +456,21 @@ class CentralWindow(QtWidgets.QMainWindow):
 
         controls = QtWidgets.QHBoxLayout()
         self.start_button = QtWidgets.QPushButton("Start Recording")
+        self.start_button.setObjectName("startButton")
         self.start_button.setMinimumHeight(44)
         self.start_button.clicked.connect(self.start_recording)
         self.stop_button = QtWidgets.QPushButton("Stop Recording")
+        self.stop_button.setObjectName("stopButton")
         self.stop_button.setMinimumHeight(44)
         self.stop_button.setEnabled(False)
         self.stop_button.clicked.connect(self.stop_recording)
         controls.addWidget(self.start_button)
         controls.addWidget(self.stop_button)
         self.packet_rate_label = QtWidgets.QLabel("0 packets/s")
-        self.packet_rate_label.setStyleSheet("font-size: 16px;")
+        self.packet_rate_label.setObjectName("metricPill")
         controls.addWidget(self.packet_rate_label)
         self.missing_packet_label = QtWidgets.QLabel("0 missing packets")
-        self.missing_packet_label.setStyleSheet("font-size: 16px; color: #16a34a;")
+        self.missing_packet_label.setObjectName("metricOk")
         controls.addWidget(self.missing_packet_label)
         controls.addStretch()
         main_layout.addLayout(controls)
@@ -466,8 +489,10 @@ class CentralWindow(QtWidgets.QMainWindow):
         export_controls = QtWidgets.QHBoxLayout()
         self.selection_label = QtWidgets.QLabel("No export range selected")
         self.export_button = QtWidgets.QPushButton("Export Selected Range")
+        self.export_button.setObjectName("secondaryButton")
         self.export_button.clicked.connect(self.export_selected_range)
         self.refresh_button = QtWidgets.QPushButton("Refresh Timeline")
+        self.refresh_button.setObjectName("secondaryButton")
         self.refresh_button.clicked.connect(self.refresh_timeline)
         export_controls.addWidget(self.selection_label, 1)
         export_controls.addWidget(self.refresh_button)
@@ -477,27 +502,148 @@ class CentralWindow(QtWidgets.QMainWindow):
 
         self.setStyleSheet(
             """
-            QMainWindow, QWidget { background: #ffffff; color: #111827; }
+            QMainWindow { background: #f3f6f4; }
+            QWidget {
+                background: #f3f6f4;
+                color: #17211d;
+                font-size: 13px;
+            }
+            QLabel#logoLabel {
+                background: transparent;
+            }
+            QLabel#appTitle {
+                background: transparent;
+                font-size: 26px;
+                font-weight: 750;
+                color: #17211d;
+            }
+            QLabel#appSubtitle {
+                background: transparent;
+                font-size: 13px;
+                color: #607169;
+            }
+            QLabel#statusPill, QLabel#metricPill, QLabel#metricOk {
+                background: #ffffff;
+                border: 1px solid #dce5df;
+                border-radius: 14px;
+                padding: 6px 12px;
+                font-size: 14px;
+                font-weight: 650;
+            }
+            QLabel#statusPill {
+                color: #2f7d68;
+            }
+            QLabel#metricPill {
+                color: #17211d;
+            }
+            QLabel#metricOk {
+                color: #1f8f39;
+            }
+            QTabWidget::pane {
+                border: 0;
+                top: -1px;
+            }
+            QTabBar::tab {
+                background: #e7eee9;
+                color: #45564d;
+                border: 1px solid #d2ded6;
+                border-bottom: 0;
+                border-top-left-radius: 6px;
+                border-top-right-radius: 6px;
+                padding: 10px 18px;
+                margin-right: 4px;
+                font-weight: 650;
+            }
+            QTabBar::tab:selected {
+                background: #ffffff;
+                color: #17211d;
+            }
             QGroupBox {
-                border: 1px solid #d1d5db;
+                background: #ffffff;
+                border: 1px solid #dce5df;
                 border-radius: 6px;
-                margin-top: 10px;
+                margin-top: 12px;
+                padding: 14px;
                 font-weight: 600;
             }
-            QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 4px; }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 12px;
+                padding: 0 6px;
+                color: #40534a;
+            }
+            QLabel {
+                background: transparent;
+            }
             QPushButton {
-                background: #2563eb;
+                background: #2f7d68;
                 color: white;
                 border: 0;
                 border-radius: 6px;
-                padding: 8px 14px;
+                padding: 9px 16px;
                 font-weight: 600;
             }
-            QPushButton:disabled { background: #9ca3af; }
+            QPushButton:hover {
+                background: #286d5b;
+            }
+            QPushButton:disabled {
+                background: #a9b5af;
+                color: #eef3f0;
+            }
+            QPushButton#startButton {
+                background: #35a853;
+                font-size: 15px;
+            }
+            QPushButton#startButton:hover {
+                background: #2f9449;
+            }
+            QPushButton#startButton:disabled {
+                background: #a9b5af;
+                color: #eef3f0;
+            }
+            QPushButton#stopButton {
+                background: #c2413a;
+                font-size: 15px;
+            }
+            QPushButton#stopButton:hover {
+                background: #a93631;
+            }
+            QPushButton#stopButton:disabled {
+                background: #a9b5af;
+                color: #eef3f0;
+            }
+            QPushButton#secondaryButton {
+                background: #ffffff;
+                color: #2f7d68;
+                border: 1px solid #c7d8cf;
+            }
+            QPushButton#secondaryButton:hover {
+                background: #edf7f1;
+            }
             QSpinBox, QLineEdit {
-                border: 1px solid #d1d5db;
+                background: #ffffff;
+                border: 1px solid #cbd9d1;
                 border-radius: 4px;
-                padding: 4px;
+                padding: 6px;
+                min-height: 24px;
+            }
+            QCheckBox {
+                background: transparent;
+                spacing: 8px;
+            }
+            QCheckBox::indicator {
+                width: 16px;
+                height: 16px;
+            }
+            QCheckBox::indicator:unchecked {
+                border: 1px solid #aebfb5;
+                border-radius: 3px;
+                background: #ffffff;
+            }
+            QCheckBox::indicator:checked {
+                border: 1px solid #2f7d68;
+                border-radius: 3px;
+                background: #57ff3a;
             }
             """
         )
@@ -511,7 +657,7 @@ class CentralWindow(QtWidgets.QMainWindow):
             dot = StatusDot()
             label = QtWidgets.QLabel(f"Radar {index + 1}")
             detail = QtWidgets.QLabel("No packets")
-            detail.setStyleSheet("color: #4b5563;")
+            detail.setStyleSheet("color: #607169; background: transparent;")
             row.addWidget(dot)
             row.addWidget(label)
             row.addStretch()
@@ -564,7 +710,10 @@ class CentralWindow(QtWidgets.QMainWindow):
         self.last_recorded_sequence = None
         self.missing_packet_count = 0
         self.missing_packet_label.setText("0 missing packets")
-        self.missing_packet_label.setStyleSheet("font-size: 16px; color: #16a34a;")
+        self.missing_packet_label.setStyleSheet(
+            "background: #ffffff; border: 1px solid #dce5df; border-radius: 14px; "
+            "padding: 6px 12px; font-size: 14px; font-weight: 650; color: #1f8f39;"
+        )
         self.packet_rate_label.setText("0 packets/s")
         self.iq_plot.set_values([])
         self.heartbeat_plot.set_values([])
@@ -592,7 +741,10 @@ class CentralWindow(QtWidgets.QMainWindow):
         self.start_button.setEnabled(can_record)
         self.set_settings_enabled(can_record)
         self.status_label.setText(status_text)
-        self.status_label.setStyleSheet("font-size: 16px; font-weight: 600; color: #2563eb;")
+        self.status_label.setStyleSheet(
+            "background: #ffffff; border: 1px solid #dce5df; border-radius: 14px; "
+            "padding: 6px 12px; font-size: 14px; font-weight: 650; color: #2f7d68;"
+        )
 
     @QtCore.Slot()
     def create_new_recording(self):
@@ -662,14 +814,20 @@ class CentralWindow(QtWidgets.QMainWindow):
             for check in self.expected_checks:
                 check.setChecked(False)
         self.missing_packet_label.setText("0 missing packets")
-        self.missing_packet_label.setStyleSheet("font-size: 16px; color: #16a34a;")
+        self.missing_packet_label.setStyleSheet(
+            "background: #ffffff; border: 1px solid #dce5df; border-radius: 14px; "
+            "padding: 6px 12px; font-size: 14px; font-weight: 650; color: #1f8f39;"
+        )
         self.start_button.setEnabled(False)
         self.stop_button.setEnabled(True)
         self.new_recording_button.setEnabled(False)
         self.open_recording_button.setEnabled(False)
         self.set_settings_enabled(False)
         self.status_label.setText("Recording")
-        self.status_label.setStyleSheet("font-size: 16px; font-weight: 600; color: #16a34a;")
+        self.status_label.setStyleSheet(
+            "background: #eaffea; border: 1px solid #aceca6; border-radius: 14px; "
+            "padding: 6px 12px; font-size: 14px; font-weight: 650; color: #207d1d;"
+        )
 
     @QtCore.Slot()
     def stop_recording(self):
@@ -707,7 +865,10 @@ class CentralWindow(QtWidgets.QMainWindow):
             self.missing_packet_label.setText(
                 f"{self.missing_packet_count} missing packets"
             )
-            self.missing_packet_label.setStyleSheet("font-size: 16px; color: #dc2626;")
+            self.missing_packet_label.setStyleSheet(
+                "background: #fff1f0; border: 1px solid #f1b7b2; border-radius: 14px; "
+                "padding: 6px 12px; font-size: 14px; font-weight: 650; color: #b42318;"
+            )
         self.last_recorded_sequence = sequence_id
 
         for index in range(4):
@@ -752,7 +913,10 @@ class CentralWindow(QtWidgets.QMainWindow):
         self.open_recording_button.setEnabled(True)
         self.set_settings_enabled(self.can_record)
         self.status_label.setText("Stopped")
-        self.status_label.setStyleSheet("font-size: 16px; font-weight: 600; color: #dc2626;")
+        self.status_label.setStyleSheet(
+            "background: #fff1f0; border: 1px solid #f1b7b2; border-radius: 14px; "
+            "padding: 6px 12px; font-size: 14px; font-weight: 650; color: #b42318;"
+        )
 
     def update_radar_status(self):
         now = time.time()

@@ -15,12 +15,16 @@ if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
 }
 
 Write-Host ""
+Write-Host "Installing uv-managed Python 3.12..."
+uv python install 3.12
+
+Write-Host ""
 Write-Host "Installing locked dependencies..."
-uv sync --group build
+uv sync --managed-python --python 3.12 --group build
 
 Write-Host ""
 Write-Host "Building portable Windows application..."
-uv run --group build pyinstaller --clean --noconfirm packaging/empkins_recorder.spec
+uv run --managed-python --python 3.12 --group build pyinstaller --clean --noconfirm packaging/empkins_recorder.spec
 
 $AppDir = Join-Path $ProjectRoot "dist\EmpkinS Radar Recorder"
 $ZipPath = Join-Path $ProjectRoot "dist\EmpkinS-Radar-Recorder-Windows.zip"

@@ -7,19 +7,20 @@ IHF Radar Recorder Suite
 Install or update the Python environment with:
 
 ```bash
-uv sync
+uv python install 3.12
+uv sync --managed-python --python 3.12
 ```
 
 The new nurse-facing entry point is:
 
 ```bash
-uv run python central_ui.py
+uv run --managed-python --python 3.12 python central_ui.py
 ```
 
 After `uv sync`, the app can also be started with:
 
 ```bash
-uv run emrad-recorder
+uv run --managed-python --python 3.12 emrad-recorder
 ```
 
 On startup it creates a new recording folder under
@@ -78,19 +79,27 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 cd C:\path\to\empkins-emrad
 ```
 
-7. Build the Windows app:
+7. If an earlier `uv sync` used Anaconda Python and `uv run` failed with
+`ImportError: DLL load failed while importing _sqlite3`, remove the old virtual
+environment once:
+
+```powershell
+Remove-Item .venv -Recurse -Force
+```
+
+8. Build the Windows app:
 
 ```powershell
 powershell -ExecutionPolicy ByPass -File .\packaging\build_windows.ps1
 ```
 
-8. Open the generated app folder:
+9. Open the generated app folder:
 
 ```text
 dist\EmpkinS Radar Recorder
 ```
 
-9. Start the app by double-clicking:
+10. Start the app by double-clicking:
 
 ```text
 EmpkinS Radar Recorder.exe

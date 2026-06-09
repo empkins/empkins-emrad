@@ -13,6 +13,15 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 
 Close and reopen PowerShell after installation.
 
+The project is pinned to uv-managed Python 3.12. If an earlier setup created a
+`.venv` from Anaconda Python and `uv run` failed with
+`ImportError: DLL load failed while importing _sqlite3`, remove the old
+environment once before building:
+
+```powershell
+Remove-Item .venv -Recurse -Force
+```
+
 ## Build
 
 From the repository folder, run:
